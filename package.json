@@ -3,27 +3,15 @@
   "description": "Fast and lightweight event-driven XML parser in pure JavaScript",
   "version": "0.6.1",
   "license": "MIT",
-  "main": "lib/index.js",
+  "main": "dist/saxophone.umd.js",
+  "module": "dist/saxophone.es5.js",
+  "typings": "dist/types/saxophone.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/matteodelabre/saxophone.git"
-  },
-  "scripts": {
-    "lint": "eslint .",
-    "tape": "tape 'lib/**/*.test.js'",
-    "test": "npm run --silent tape | faucet",
-    "coverage": "nyc --reporter=html --reporter=text npm --silent run tape",
-    "coveralls": "nyc report --reporter=text-lcov | coveralls",
-    "benchmark": "node benchmark"
-  },
-  "nyc": {
-    "exclude": [
-      "node_modules",
-      "lib/**/*.test.js"
-    ]
+    "url": ""
   },
   "engines": {
-    "node": "8 || 10 || 12 || 13"
+    "node": ">=10.0.0"
   },
   "keywords": [
     "xml",
@@ -33,26 +21,119 @@
     "fast"
   ],
   "files": [
-    "lib/**/*"
+    "dist"
   ],
   "author": {
     "name": "Mattéo Delabre",
     "email": "contact@matteodelabre.me",
     "url": "https://github.com/matteodelabre"
   },
+  "scripts": {
+    "lint": "tslint  --project tsconfig.json -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
+    "prebuild": "rimraf dist",
+    "build": "tsc --module commonjs && rollup -c rollup.config.ts && typedoc --out docs --target es6 --theme minimal --mode file src",
+    "start": "rollup -c rollup.config.ts -w",
+    "test": "jest --coverage",
+    "test:watch": "jest --coverage --watch",
+    "test:prod": "npm run lint && npm run test -- --no-cache",
+    "deploy-docs": "ts-node tools/gh-pages-publish",
+    "report-coverage": "cat ./coverage/lcov.info | coveralls",
+    "commit": "git-cz",
+    "semantic-release": "semantic-release",
+    "semantic-release-prepare": "ts-node tools/semantic-release-prepare",
+    "precommit": "lint-staged",
+    "travis-deploy-once": "travis-deploy-once"
+  },
+  "lint-staged": {
+    "{src,test}/**/*.ts": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-conventional-changelog"
+    }
+  },
+  "jest": {
+    "transform": {
+      ".(ts|tsx)": "ts-jest"
+    },
+    "testEnvironment": "node",
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 90,
+        "functions": 95,
+        "lines": 95,
+        "statements": 95
+      }
+    },
+    "collectCoverageFrom": [
+      "src/*.{js,ts}"
+    ]
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "printWidth": 500
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
   "devDependencies": {
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-conventional": "^8.3.4",
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-json": "4.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@types/common-tags": "^1.8.0",
+    "@types/jest": "^25.1.3",
+    "@types/lodash": "^4.14.149",
+    "@types/lodash.uniq": "^4.5.6",
+    "@types/node": "^10.0.0",
     "benchmark": "^2.1.4",
+    "colors": "^1.4.0",
+    "commitizen": "^4.0.3",
     "common-tags": "^1.8.0",
-    "coveralls": "^3.0.8",
-    "eslint": "^6.7.0",
-    "faucet": "0.0.1",
-    "lodash.uniq": "^4.5.0",
-    "nyc": "^14.1.1",
-    "tap-spec": "^5.0.0",
-    "tape": "^4.11.0"
+    "coveralls": "^3.0.9",
+    "cross-env": "^7.0.0",
+    "cz-conventional-changelog": "^3.1.0",
+    "husky": "^4.2.3",
+    "jest": "^25.1.0",
+    "jest-config": "^25.1.0",
+    "lint-staged": "^10.0.8",
+    "lodash": "^4.17.15",
+    "lodash.camelcase": "^4.3.0",
+    "prettier": "^1.19.1",
+    "prompt": "^1.0.0",
+    "replace-in-file": "^5.0.2",
+    "rimraf": "^3.0.2",
+    "rollup": "^1.31.1",
+    "rollup-plugin-sourcemaps": "^0.5.0",
+    "rollup-plugin-typescript2": "^0.26.0",
+    "semantic-release": "^17.0.4",
+    "shelljs": "^0.8.3",
+    "travis-deploy-once": "^5.0.11",
+    "ts-jest": "^25.2.1",
+    "ts-node": "^8.6.2",
+    "tslint": "^6.0.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-config-standard": "^9.0.0",
+    "typedoc": "^0.16.10",
+    "typescript": "^3.8.2"
   },
   "dependencies": {
-    "readable-stream": "^3.4.0",
     "string_decoder": "^1.3.0"
   }
 }

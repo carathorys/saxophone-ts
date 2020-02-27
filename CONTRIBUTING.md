@@ -1,19 +1,17 @@
-<!-- vim: set spelllang=en : -->
-# Contributing
+We're really glad you're reading this, because we need volunteer developers to help this project come to fruition. 👏
 
-Thank you for your interest in contributing to this repo! All contributions (even small ones) are welcome. You can contribute either by submitting a new issue for a bug you encountered, or by fixing a reported bug.
+## Instructions
 
-## Reporting a bug
+These steps will guide you through contributing to this project:
 
-To report a bug in this package, [fill in a new issue.](https://github.com/matteodelabre/saxophone/issues/new) Please provide all the details needed to reproduce your bug, including your versions Node.js and this package. A minimal failing test case is usually a good way to report a bug.
+- Fork the repo
+- Clone it and install dependencies
 
-## Fixing a bug
+		git clone https://github.com/YOUR-USERNAME/typescript-library-starter
+		npm install
 
-1. Fork this repository.
-2. Clone your fork locally.
-3. Run `npm install` to install development dependencies.
-3. Checkout to a new branch named appropriately. This name should reflect the bug you tackle, eg. if you had fixed the issue "Improve documentation", you could have chosen `improve-docs`.
-4. Make your changes!
-5. If you introduced new features, don’t forget to add test cases for them.
-6. Make sure all tests run successfully (`npm run test`) and that your code complies to the style guide (`npm run lint`).
-7. Submit a pull request.
+Keep in mind that after running `npm install` the git repo is reset. So a good way to cope with this is to have a copy of the folder to push the changes, and the other to try them.
+
+Make and commit your changes. Make sure the commands npm run build and npm run test:prod are working.
+
+Finally send a [GitHub Pull Request](https://github.com/alexjoverm/typescript-library-starter/compare?expand=1) with a clear list of what you've done (read more [about pull requests](https://help.github.com/articles/about-pull-requests/)). Make sure all of your commits are atomic (one feature per commit).

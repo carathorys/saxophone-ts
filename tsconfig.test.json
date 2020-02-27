@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/test",
+    "allowJs": true,
+    "types": ["node", "jest", "jest-fetch-mock"]
+  },
+  "include": ["src/**/*.test.ts", "src/**/*.d.ts"],
+  "exclude": null
+}
