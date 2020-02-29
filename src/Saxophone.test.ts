@@ -1,7 +1,7 @@
 import { Saxophone } from './Saxophone';
 import { stripIndent } from 'common-tags';
 import { uniq } from 'lodash';
-import { Readable } from 'stream';
+import { Readable } from 'readable-stream';
 
 /**
  * Verify that an XML text is parsed as the specified stream of events.

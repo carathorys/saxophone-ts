@@ -1,7 +1,8 @@
-import { StringDecoder, NodeStringDecoder } from 'string_decoder';
-import { Writable } from 'stream';
+import { Writable } from 'readable-stream';
 
-/**ƒ
+import { StringDecoder } from 'string_decoder';
+
+/**
  * Information about a text node.
  *
  * @typedef TextNode
@@ -140,7 +141,7 @@ export const Node = {
  *
  */
 export class Saxophone extends Writable {
-  _decoder: NodeStringDecoder;
+  _decoder: StringDecoder;
   _writableState: any;
   _tagStack: any[];
   _waiting: { token: any; data: any } | null = null;
