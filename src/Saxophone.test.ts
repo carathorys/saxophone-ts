@@ -1,4 +1,4 @@
-import { Saxophone } from './Saxophone';
+import { Events, Saxophone } from './Saxophone';
 import { stripIndent } from 'common-tags';
 import { uniq } from 'lodash';
 import { Readable } from 'readable-stream';
@@ -140,7 +140,11 @@ describe('Saxophone', () => {
 
   it('should parse tags containing attributes', () => {
     expectEvents('<tag first="one" second="two"  third="three " /><other attr="value"></other>', [
-      ['tagopen', { name: 'tag', attrs: ' first="one" second="two"  third="three " ', isSelfClosing: true }],
+      ['tagopen', {
+        name: 'tag',
+        attrs: ' first="one" second="two"  third="three " ',
+        isSelfClosing: true
+      }],
       ['tagopen', { name: 'other', attrs: ' attr="value"', isSelfClosing: false }],
       ['tagclose', { name: 'other' }]
     ]);
@@ -226,6 +230,7 @@ describe('Saxophone', () => {
     `);
 
     const parser1 = new Saxophone();
+
     const events1: any[] = [];
     let finished1 = false;
 
@@ -233,12 +238,12 @@ describe('Saxophone', () => {
     const events2: any[] = [];
     let finished2 = false;
 
-    ['text', 'cdata', 'comment', 'processinginstruction', 'tagopen', 'tagclose'].forEach(eventName => {
-      parser1.on(eventName, eventArgs => {
+    ['text', 'cdata', 'comment', 'processingInstruction', 'tagOpen', 'tagClose'].forEach(eventName => {
+      parser1.on(eventName, (eventArgs: Events) => {
         events1.push([eventName, eventArgs]);
       });
 
-      parser2.on(eventName, eventArgs => {
+      parser2.on(eventName, (eventArgs: Events) => {
         events2.push([eventName, eventArgs]);
       });
     });

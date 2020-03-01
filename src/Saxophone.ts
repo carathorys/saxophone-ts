@@ -1,6 +1,4 @@
-import { Writable } from 'readable-stream';
-
-import { StringDecoder } from 'string_decoder';
+import { Writable } from 'stream';
 
 /**
  * Information about a text node.
@@ -9,7 +7,7 @@ import { StringDecoder } from 'string_decoder';
  * @type {object}
  * @prop {string} contents The text value.
  */
-export type TextNode = {
+type TextNode = {
   contents: string;
 };
 
@@ -28,7 +26,7 @@ export type TextNode = {
  * @type {object}
  * @prop {string} contents The CDATA contents.
  */
-export type CDATANode = {
+type CDATANode = {
   contents: string;
 };
 /**
@@ -46,7 +44,7 @@ export type CDATANode = {
  * @type {object}
  * @prop {string} contents The comment contents
  */
-export type CommentNode = {
+type CommentNode = {
   contents: string;
 };
 
@@ -65,7 +63,7 @@ export type CommentNode = {
  * @type {object}
  * @prop {string} contents The instruction contents
  */
-export type ProcessingInstructionNode = {
+type ProcessingInstructionNode = {
   contents: string;
 };
 
@@ -88,7 +86,7 @@ export type ProcessingInstructionNode = {
  * @prop {boolean} isSelfClosing Whether the tag self-closes (tags of the form
  * `<tag />`). Such tags will not be followed by a closing tag.
  */
-export type TagOpenNode = {
+type TagOpenNode = {
   name: string;
   attrs: string;
   isSelfClosing: boolean;
@@ -108,7 +106,7 @@ export type TagOpenNode = {
  * @type {object}
  * @prop {string} name The tag name
  */
-export type TagCloseNode = {
+type TagCloseNode = {
   name: string;
 };
 
@@ -123,15 +121,29 @@ export type TagCloseNode = {
  * Nodes that can be found inside an XML stream.
  * @private
  */
-export const Node = {
-  text: 'text',
-  cdata: 'cdata',
-  comment: 'comment',
-  markupDeclaration: 'markupDeclaration',
-  processingInstruction: 'processinginstruction',
-  tagOpen: 'tagopen',
-  tagClose: 'tagclose'
-};
+export type Events =
+  'text'
+  | 'cdata'
+  | 'comment'
+  | 'markupDeclaration'
+  | 'processingInstruction'
+  | 'tagOpen'
+  | 'tagClose'
+
+type NodeTypes =
+  TagOpenNode
+  | TagCloseNode
+  | CommentNode
+  | CDATANode
+  | ProcessingInstructionNode ;
+
+
+type EventListenerTypes = ((node: TextNode) => void) |
+  ((node: TagOpenNode) => void) |
+  ((node: TagCloseNode) => void) |
+  ((node: CommentNode) => void) |
+  ((node: CDATANode) => void) |
+  ((node: ProcessingInstructionNode) => void);
 
 /**
  * Parse a XML stream and emit events corresponding
@@ -141,25 +153,61 @@ export const Node = {
  *
  */
 export class Saxophone extends Writable {
-  _decoder: StringDecoder;
   _writableState: any;
   _tagStack: any[];
   _waiting: { token: any; data: any } | null = null;
+
   /**
    * Create a new parser instance.
    */
   constructor() {
-    super({ decodeStrings: false });
-
-    // String decoder instance
-    const state = this._writableState;
-    this._decoder = new StringDecoder(state.defaultEncoding);
+    super({ decodeStrings: true, defaultEncoding: 'utf8' });
 
     // Stack of tags that were opened up until the current cursor position
     this._tagStack = [];
 
     // Not waiting initially
     this._waiting = null;
+  }
+
+  on<E extends Events, T extends EventListenerTypes>(event: E | string | symbol, listener: T | ((...args: any[]) => void)): this {
+    return super.on(event, listener);
+  }
+
+  /**
+   * Handle a chunk of data written into the stream.
+   *
+   * @param {Buffer|string} chunk Chunk of data.
+   * @param {string} encoding Encoding of the string, or 'buffer'.
+   * @param {function} callback
+   */
+  _write(chunk: any, encoding: string, callback: (error?: Error | null) => void): void {
+    this.__write(chunk, encoding)
+      .then(() => callback(null))
+      .catch(err => callback(err));
+  }
+
+  /**
+   * Handle the end of incoming data.
+   *
+   * @private
+   * @param {function} callback
+   */
+  _final(callback: (error?: Error | null) => void): void {
+    this.__final()
+      .then(() => callback())
+      .catch(err => callback(err));
+  }
+
+  /**
+   * Immediately parse a complete chunk of XML and close the stream.
+   *
+   * @param {Buffer|string} input Input chunk.
+   * @return {Saxophone} This instance.
+   */
+  parse(input: Buffer | string): Saxophone {
+    this.end(input);
+    return this;
   }
 
   /**
@@ -170,7 +218,7 @@ export class Saxophone extends Writable {
    * @param token Type of token that is being parsed.
    * @param data Pending data.
    */
-  private _wait(token: string, data: string) {
+  private _wait(token: Events, data: string) {
     this._waiting = { token, data };
   }
 
@@ -203,7 +251,7 @@ export class Saxophone extends Writable {
       this._tagStack.push(node.name);
     }
 
-    this.emit(Node.tagOpen, node);
+    this.emit('tagOpen', node);
   }
 
   /**
@@ -227,13 +275,13 @@ export class Saxophone extends Writable {
         // We read a TEXT node but there might be some
         // more text data left, so we wait
         if (nextTag === -1) {
-          this._wait(Node.text, input.slice(chunkPos));
+          this._wait('text', input.slice(chunkPos));
           break;
         }
 
         // A tag follows, so we can be confident that
         // we have all the data needed for the TEXT node
-        this.emit(Node.text, { contents: input.slice(chunkPos, nextTag) });
+        this.emit('text', { contents: input.slice(chunkPos, nextTag) });
 
         chunkPos = nextTag;
       }
@@ -252,7 +300,7 @@ export class Saxophone extends Writable {
         // we need to wait for upcoming data
         // tslint:disable-next-line: strict-type-predicates
         if (typeof nextNextChar === 'undefined') {
-          this._wait(Node.markupDeclaration, input.slice(chunkPos - 2));
+          this._wait('markupDeclaration', input.slice(chunkPos - 2));
           break;
         }
 
@@ -263,19 +311,19 @@ export class Saxophone extends Writable {
           // Incomplete CDATA section, we need to wait for
           // upcoming data
           if (cdataClose === -1) {
-            this._wait(Node.cdata, input.slice(chunkPos - 9));
+            this._wait('cdata', input.slice(chunkPos - 9));
             break;
           }
 
-          this.emit(Node.cdata, { contents: input.slice(chunkPos, cdataClose) });
+          this.emit('cdata', { contents: input.slice(chunkPos, cdataClose) });
 
           chunkPos = cdataClose + 3;
           continue;
         }
 
         const checkNext = input[chunkPos + 1];
-
         const typeofNextChar = typeof checkNext;
+
         if (nextNextChar === '-' && (checkNext === '-' || typeofNextChar === 'undefined')) {
           chunkPos += 2;
           const commentClose = input.indexOf('--', chunkPos);
@@ -283,7 +331,7 @@ export class Saxophone extends Writable {
           // Incomplete comment node, we need to wait for
           // upcoming data
           if (commentClose === -1) {
-            this._wait(Node.comment, input.slice(chunkPos - 4));
+            this._wait('comment', input.slice(chunkPos - 4));
             break;
           }
 
@@ -291,7 +339,7 @@ export class Saxophone extends Writable {
             throw Error('Unexpected -- inside comment');
           }
 
-          this.emit(Node.comment, { contents: input.slice(chunkPos, commentClose) });
+          this.emit('comment', { contents: input.slice(chunkPos, commentClose) });
 
           chunkPos = commentClose + 3;
           continue;
@@ -308,11 +356,11 @@ export class Saxophone extends Writable {
         // Unclosed processing instruction, we need to
         // wait for upcoming data
         if (piClose === -1) {
-          this._wait(Node.processingInstruction, input.slice(chunkPos - 2));
+          this._wait('processingInstruction', input.slice(chunkPos - 2));
           break;
         }
 
-        this.emit(Node.processingInstruction, { contents: input.slice(chunkPos, piClose) });
+        this.emit('processingInstruction', { contents: input.slice(chunkPos, piClose) });
 
         chunkPos = piClose + 2;
         continue;
@@ -322,7 +370,7 @@ export class Saxophone extends Writable {
       const tagClose = input.indexOf('>', chunkPos);
 
       if (tagClose === -1) {
-        this._wait(Node.tagOpen, input.slice(chunkPos - 1));
+        this._wait('tagOpen', input.slice(chunkPos - 1));
         break;
       }
 
@@ -336,7 +384,7 @@ export class Saxophone extends Writable {
           throw Error(`Unclosed tag: ${stackedTagName}`);
         }
 
-        this.emit(Node.tagClose, { name: tagName });
+        this.emit('tagClose', { name: tagName });
 
         chunkPos = tagClose + 1;
         continue;
@@ -377,33 +425,8 @@ export class Saxophone extends Writable {
    * @param {Buffer|string} chunk Chunk of data.
    * @param {string} encoding Encoding of the string, or 'buffer'.
    */
-  private async __write(chunk: string | Buffer, encoding: string): Promise<void> {
-    const data = chunk instanceof Buffer || encoding === 'buffer' ? this._decoder.write(chunk as Buffer) : chunk;
-    this._parseChunk(data);
-  }
-
-  /**
-   * Handle a chunk of data written into the stream.
-   *
-   * @param {Buffer|string} chunk Chunk of data.
-   * @param {string} encoding Encoding of the string, or 'buffer'.
-   */
-  _write(chunk: any, encoding: string, callback: (error?: Error | null) => void): void {
-    this.__write(chunk, encoding)
-      .then(() => callback())
-      .catch(err => callback(err));
-  }
-
-  /**
-   * Handle the end of incoming data.
-   *
-   * @private
-   * @param {function} callback
-   */
-  _final(callback: (error?: Error | null) => void): void {
-    this.__final()
-      .then(() => callback())
-      .catch(err => callback(err));
+  private async __write(chunk: string, encoding: string): Promise<void> {
+    this._parseChunk(chunk);
   }
 
   /**
@@ -411,49 +434,31 @@ export class Saxophone extends Writable {
    */
   private async __final(): Promise<void> {
     // Make sure all data has been extracted from the decoder
-    this._parseChunk(this._decoder.end());
+    // this._parseChunk(this._decoder.end());
 
     // Handle unclosed nodes
-    if (this._waiting !== null) {
-      switch (this._waiting.token) {
-        case Node.text:
-          // Text nodes are implicitly closed
-          this.emit('text', { contents: this._waiting.data });
-          break;
-        case Node.cdata:
-          throw new Error('Unclosed CDATA section');
-          return;
-        case Node.comment:
-          throw new Error('Unclosed comment');
-          return;
-        case Node.processingInstruction:
-          throw new Error('Unclosed processing instruction');
-          return;
-        case Node.tagOpen:
-        case Node.tagClose:
-          // We do not distinguish between unclosed opening
-          // or unclosed closing tags
-          throw new Error('Unclosed tag');
-          return;
-        default:
-        // Pass
-      }
+    switch (this._waiting?.token) {
+      case 'text':
+        // Text nodes are implicitly closed
+        this.emit('text', { contents: this._waiting.data });
+        break;
+      case 'cdata':
+        throw new Error('Unclosed CDATA section');
+      case 'comment':
+        throw new Error('Unclosed comment');
+      case 'processingInstruction':
+        throw new Error('Unclosed processing instruction');
+      case 'tagOpen':
+      case 'tagClose':
+        // We do not distinguish between unclosed opening
+        // or unclosed closing tags
+        throw new Error('Unclosed tag');
+      default:
+      // Pass
     }
 
     if (this._tagStack.length !== 0) {
       throw new Error(`Unclosed tags: ${this._tagStack.join(',')}`);
-      return;
     }
-  }
-
-  /**
-   * Immediately parse a complete chunk of XML and close the stream.
-   *
-   * @param {Buffer|string} input Input chunk.
-   * @return {Saxophone} This instance.
-   */
-  parse(input: Buffer | string): Saxophone {
-    this.end(input);
-    return this;
   }
 }
