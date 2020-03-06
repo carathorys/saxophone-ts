@@ -138,12 +138,13 @@ type EventListenerTypes =
   | ((node: CDATANode) => void)
   | ((node: ProcessingInstructionNode) => void);
 
-  const stream = require('readable-stream');
-  /**
+const stream = require('readable-stream');
+
+/**
  * Parse a XML stream and emit events corresponding
  * to the different tokens encountered.
  *
- * @extends Writable
+ * @extends streamWritable
  *
  */
 export class Saxophone extends stream.Writable {
