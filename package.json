@@ -1,7 +1,7 @@
 {
   "name": "saxophone-ts",
   "description": "Fast and lightweight event-driven XML parser in pure JavaScript",
-  "version": "0.0.0-p10",
+  "version": "0.0.0-p11",
   "license": "MIT",
   "main": "dist/saxophone.umd.js",
   "module": "dist/saxophone.es5.js",
