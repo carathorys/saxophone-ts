@@ -1,7 +1,7 @@
 import { Events, Saxophone } from './Saxophone';
 import { stripIndent } from 'common-tags';
 import { uniq } from 'lodash';
-import { Readable } from 'readable-stream';
+const Stream = require('readable-stream');
 
 /**
  * Verify that an XML text is parsed as the specified stream of events.
@@ -252,7 +252,7 @@ describe('Saxophone', () => {
     parser1.parse(xml);
 
     // parser2 receives the data as several chunks through a piped stream
-    const stream = new Readable();
+    const stream = new Stream.Readable();
 
     stream.pipe(parser2);
 

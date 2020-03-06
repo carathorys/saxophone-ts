@@ -1,5 +1,3 @@
-import { Writable } from 'stream';
-
 /**
  * Information about a text node.
  *
@@ -122,37 +120,33 @@ type TagCloseNode = {
  * @private
  */
 export type Events =
-  'text'
+  | 'text'
   | 'cdata'
   | 'comment'
   | 'markupDeclaration'
   | 'processingInstruction'
   | 'tagOpen'
-  | 'tagClose'
+  | 'tagClose';
 
-type NodeTypes =
-  TagOpenNode
-  | TagCloseNode
-  | CommentNode
-  | CDATANode
-  | ProcessingInstructionNode ;
+type NodeTypes = TagOpenNode | TagCloseNode | CommentNode | CDATANode | ProcessingInstructionNode;
 
+type EventListenerTypes =
+  | ((node: TextNode) => void)
+  | ((node: TagOpenNode) => void)
+  | ((node: TagCloseNode) => void)
+  | ((node: CommentNode) => void)
+  | ((node: CDATANode) => void)
+  | ((node: ProcessingInstructionNode) => void);
 
-type EventListenerTypes = ((node: TextNode) => void) |
-  ((node: TagOpenNode) => void) |
-  ((node: TagCloseNode) => void) |
-  ((node: CommentNode) => void) |
-  ((node: CDATANode) => void) |
-  ((node: ProcessingInstructionNode) => void);
-
-/**
+  const stream = require('readable-stream');
+  /**
  * Parse a XML stream and emit events corresponding
  * to the different tokens encountered.
  *
  * @extends Writable
  *
  */
-export class Saxophone extends Writable {
+export class Saxophone extends stream.Writable {
   _writableState: any;
   _tagStack: any[];
   _waiting: { token: any; data: any } | null = null;
@@ -161,7 +155,7 @@ export class Saxophone extends Writable {
    * Create a new parser instance.
    */
   constructor() {
-    super({ decodeStrings: true, defaultEncoding: 'utf8' });
+    super({ defaultEncoding: 'utf8' });
 
     // Stack of tags that were opened up until the current cursor position
     this._tagStack = [];
@@ -170,7 +164,10 @@ export class Saxophone extends Writable {
     this._waiting = null;
   }
 
-  on<E extends Events, T extends EventListenerTypes>(event: E | string | symbol, listener: T | ((...args: any[]) => void)): this {
+  on<E extends Events, T extends EventListenerTypes>(
+    event: E | string | symbol,
+    listener: T | ((...args: any[]) => void)
+  ): this {
     return super.on(event, listener);
   }
 
@@ -304,7 +301,10 @@ export class Saxophone extends Writable {
           break;
         }
 
-        if (nextNextChar === '[' && 'CDATA['.indexOf(input.slice(chunkPos + 1, chunkPos + 7)) > -1) {
+        if (
+          nextNextChar === '[' &&
+          'CDATA['.indexOf(input.slice(chunkPos + 1, chunkPos + 7)) > -1
+        ) {
           chunkPos += 7;
           const cdataClose = input.indexOf(']]>', chunkPos);
 
