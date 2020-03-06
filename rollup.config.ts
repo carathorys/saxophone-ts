@@ -7,16 +7,15 @@ import json from '@rollup/plugin-json';
 
 const pkg = require('./package.json');
 
-const libraryName = 'rtorrent-tslib';
-
-export default {
+const libraryName = 'saxophone-ts';
+const options = {
   input: `src/index.ts`,
   output: [
     { file: pkg.main, name: camelCase(libraryName), format: 'umd', sourcemap: true },
-    { file: pkg.module, format: 'es', sourcemap: true }
+    { file: pkg.module, format: 'es', esModule: true, sourcemap: true }
   ],
   // Indicate here external modules you don't wanna include in your bundle (i.e.: 'lodash')
-  external: [],
+  external: ['lodash', 'readable-stream'],
   watch: {
     include: 'src/**'
   },
@@ -30,8 +29,9 @@ export default {
     // Allow node_modules resolution, so you can use 'external' to control
     // which external modules to include in the bundle
     // https://github.com/rollup/rollup-plugin-node-resolve#usage
-    resolve(),
+    resolve({ browser: true, }),
     // Resolve source maps to the original source
     sourceMaps()
   ]
 };
+export default options;
