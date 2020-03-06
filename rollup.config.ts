@@ -4,6 +4,7 @@ import sourceMaps from 'rollup-plugin-sourcemaps';
 import camelCase from 'lodash/camelCase';
 import typescript from 'rollup-plugin-typescript2';
 import json from '@rollup/plugin-json';
+import { RollupOptions } from 'rollup';
 
 const pkg = require('./package.json');
 
@@ -12,10 +13,10 @@ const options = {
   input: `src/index.ts`,
   output: [
     { file: pkg.main, name: camelCase(libraryName), format: 'umd', sourcemap: true },
-    { file: pkg.module, format: 'es', esModule: true, sourcemap: true }
+    { file: pkg.module, format: 'esm', sourcemap: true }
   ],
   // Indicate here external modules you don't wanna include in your bundle (i.e.: 'lodash')
-  external: ['lodash', 'readable-stream'],
+  external: [],
   watch: {
     include: 'src/**'
   },
@@ -29,7 +30,7 @@ const options = {
     // Allow node_modules resolution, so you can use 'external' to control
     // which external modules to include in the bundle
     // https://github.com/rollup/rollup-plugin-node-resolve#usage
-    resolve({ browser: true, }),
+    resolve(),
     // Resolve source maps to the original source
     sourceMaps()
   ]
