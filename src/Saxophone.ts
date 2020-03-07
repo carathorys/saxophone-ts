@@ -181,7 +181,7 @@ export class Saxophone extends stream.Writable {
    */
   _write(chunk: any, encoding: string, callback: (error?: Error | null) => void): void {
     this.__write(chunk, encoding)
-      .then(() => callback(null))
+      .then(() => callback())
       .catch(err => callback(err));
   }
 
@@ -427,7 +427,7 @@ export class Saxophone extends stream.Writable {
    * @param {string} encoding Encoding of the string, or 'buffer'.
    */
   private async __write(chunk: string, encoding: string): Promise<void> {
-    this._parseChunk(chunk);
+    return this._parseChunk(chunk);
   }
 
   /**
