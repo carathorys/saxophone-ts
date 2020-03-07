@@ -4,16 +4,16 @@ import sourceMaps from 'rollup-plugin-sourcemaps';
 import camelCase from 'lodash/camelCase';
 import typescript from 'rollup-plugin-typescript2';
 import json from '@rollup/plugin-json';
-import { RollupOptions } from 'rollup';
+// import { RollupOptions } from 'rollup';
 
 const pkg = require('./package.json');
 
 const libraryName = 'saxophone-ts';
-const options = {
+const options /* : RollupOptions*/ = {
   input: `src/index.ts`,
   output: [
     { file: pkg.main, name: camelCase(libraryName), format: 'umd', sourcemap: true },
-    { file: pkg.module, format: 'esm', sourcemap: true }
+    { file: pkg.module, format: 'es', sourcemap: true }
   ],
   // Indicate here external modules you don't wanna include in your bundle (i.e.: 'lodash')
   external: [],

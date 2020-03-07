@@ -1,11 +1,11 @@
 {
   "name": "saxophone-ts",
   "description": "Fast and lightweight event-driven XML parser in pure JavaScript",
-  "version": "0.0.0-p14",
+  "version": "0.0.0-p15",
   "license": "MIT",
   "main": "dist/saxophone.umd.js",
   "module": "dist/saxophone.es5.js",
-  "types": "dist/types/index.d.ts",
+  "types": "dist/types/src/index.d.ts",
   "repository": {
     "type": "git",
     "url": ""
@@ -141,7 +141,7 @@
     "tslint-config-prettier": "^1.18.0",
     "tslint-config-standard": "^9.0.0",
     "typedoc": "^0.16.10",
-    "typescript": "^3.8.2"
+    "typescript": "^3.8.3"
   },
   "dependencies": {
     "readable-stream": "^3.6.0"
