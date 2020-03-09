@@ -1,145 +1,11 @@
-/**
- * Information about a text node.
- *
- * @typedef TextNode
- * @type {object}
- * @prop {string} contents The text value.
- */
-type TextNode = {
-  contents: string;
-};
+import { EventListeners, EventType, EventListenerFunctions, EventTypeMap } from './static/events';
+import { NodeType, TagOpenNode } from './static/nodes';
 
-/**
- * Emitted whenever a text node is encountered.
- *
- * @event Saxophone#text
- * @type {TextNode}
- */
+export { EventListeners, EventType, EventListenerFunctions, NodeType };
 
-/**
- * Information about a CDATA node
- * (<![CDATA[ ... ]]>).
- *
- * @typedef CDATANode
- * @type {object}
- * @prop {string} contents The CDATA contents.
- */
-type CDATANode = {
-  contents: string;
-};
-/**
- * Emitted whenever a CDATA node is encountered.
- *
- * @event Saxophone#cdata
- * @type {CDATANode}
- */
-
-/**
- * Information about a comment node
- * (<!-- ... -->).
- *
- * @typedef CommentNode
- * @type {object}
- * @prop {string} contents The comment contents
- */
-type CommentNode = {
-  contents: string;
-};
-
-/**
- * Emitted whenever a comment node is encountered.
- *
- * @event Saxophone#comment
- * @type {CommentNode}
- */
-
-/**
- * Information about a processing instruction node
- * (<? ... ?>).
- *
- * @typedef ProcessingInstructionNode
- * @type {object}
- * @prop {string} contents The instruction contents
- */
-type ProcessingInstructionNode = {
-  contents: string;
-};
-
-/**
- * Emitted whenever a processing instruction node is encountered.
- *
- * @event Saxophone#processinginstruction
- * @type {ProcessingInstructionNode}
- */
-
-/**
- * Information about an opened tag
- * (<tag attr="value">).
- *
- * @typedef TagOpenNode
- * @type {object}
- * @prop {string} name Name of the tag that was opened.
- * @prop {string} attrs Attributes passed to the tag, in a string representation
- * (use Saxophone.parseAttributes to get an attribute-value mapping).
- * @prop {boolean} isSelfClosing Whether the tag self-closes (tags of the form
- * `<tag />`). Such tags will not be followed by a closing tag.
- */
-type TagOpenNode = {
-  name: string;
-  attrs: string;
-  isSelfClosing: boolean;
-};
-/**
- * Emitted whenever an opening tag node is encountered.
- *
- * @event Saxophone#tagopen
- * @type {TagOpen}
- */
-
-/**
- * Information about a closed tag
- * (</tag>).
- *
- * @typedef TagCloseNode
- * @type {object}
- * @prop {string} name The tag name
- */
-type TagCloseNode = {
-  name: string;
-};
-
-/**
- * Emitted whenever a closing tag node is encountered.
- *
- * @event Saxophone#tagclose
- * @type {TagCloseNode}
- */
-
-/**
- * Nodes that can be found inside an XML stream.
- * @private
- */
-export type Events =
-  | 'text'
-  | 'cdata'
-  | 'comment'
-  | 'markupDeclaration'
-  | 'processingInstruction'
-  | 'tagOpen'
-  | 'tagClose';
-
-type NodeTypes = TagOpenNode | TagCloseNode | CommentNode | CDATANode | ProcessingInstructionNode;
-
-type EventListenerTypes =
-  | ((node: TextNode) => void)
-  | ((node: TagOpenNode) => void)
-  | ((node: TagCloseNode) => void)
-  | ((node: CommentNode) => void)
-  | ((node: CDATANode) => void)
-  | ((node: ProcessingInstructionNode) => void);
-
-const stream = require('readable-stream');
-
+const rStream = require('readable-stream');
+const { Readable } = rStream;
+export { Readable };
 /**
  * Parse a XML stream and emit events corresponding
  * to the different tokens encountered.
@@ -147,8 +13,7 @@ const stream = require('readable-stream');
  * @extends streamWritable
  *
  */
-export class Saxophone extends stream.Writable {
-  _writableState: any;
+export class Saxophone extends rStream.Writable {
   _tagStack: any[];
   _waiting: { token: any; data: any } | null = null;
 
@@ -157,7 +22,6 @@ export class Saxophone extends stream.Writable {
    */
   constructor() {
     super({ defaultEncoding: 'utf8' });
-
     // Stack of tags that were opened up until the current cursor position
     this._tagStack = [];
 
@@ -165,9 +29,9 @@ export class Saxophone extends stream.Writable {
     this._waiting = null;
   }
 
-  on<E extends Events, T extends EventListenerTypes>(
-    event: E | string | symbol,
-    listener: T | ((...args: any[]) => void)
+  on<E extends EventType, N extends EventTypeMap<E>>(
+    event: E,
+    listener: EventListenerFunctions<E, N>
   ): this {
     return super.on(event, listener);
   }
@@ -215,9 +79,12 @@ export class Saxophone extends stream.Writable {
    * @param {Buffer|string} input Input chunk.
    * @return {Saxophone} This instance.
    */
-  parse(input: Buffer | string): Saxophone {
-    this.end(input);
-    return this;
+  async parse(input: any | string): Promise<void> {
+    if (input instanceof rStream.Readable) {
+      input.pipe(this);
+    } else {
+      this.write(input);
+    }
   }
 
   /**
@@ -228,7 +95,7 @@ export class Saxophone extends stream.Writable {
    * @param token Type of token that is being parsed.
    * @param data Pending data.
    */
-  private _wait(token: Events, data: string) {
+  private _wait(token: EventType, data: string) {
     this._waiting = { token, data };
   }
 

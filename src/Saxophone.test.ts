@@ -1,7 +1,8 @@
-import { Events, Saxophone } from './Saxophone';
 import { stripIndent } from 'common-tags';
 import { uniq } from 'lodash';
-const Stream = require('readable-stream');
+import { EventType, Saxophone } from './Saxophone';
+
+const { Readable } = require('readable-stream');
 
 /**
  * Verify that an XML text is parsed as the specified stream of events.
@@ -10,17 +11,17 @@ const Stream = require('readable-stream');
  * @param events Sequence of events that must be emitted in order.
  */
 const expectEvents = async (xml: string | string[], events: any[]) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     let eventsIndex = 0;
     const parser = new Saxophone();
-  
-    uniq(events.map(([name]) => name)).forEach((eventName: string) => {
-      parser.on(eventName, async (eventArgs: { message: any }) => {
+
+    uniq(events.map(([name]) => name)).forEach((eventName: EventType) => {
+      parser.on(eventName, async (eventArgs: any) => {
         const [expEventName, expEventArgs] = events[eventsIndex];
         eventsIndex++;
-  
+
         expect(eventName).toBe(expEventName);
-  
+
         if (typeof expEventArgs === 'object' && expEventArgs !== null) {
           if (expEventArgs.constructor.name === 'Error') {
             expect(eventArgs.message).toBe(expEventArgs.message);
@@ -31,30 +32,29 @@ const expectEvents = async (xml: string | string[], events: any[]) => {
         }
       });
     });
-  
-    parser.on('finish', () => {
+
+    parser.on('finish', async () => {
       expect(eventsIndex).toBe(events.length);
       resolve();
     });
-  
+
     if (!Array.isArray(xml)) {
       // By default, split data in chunks of size 10
       const chunks = [];
-  
+
       for (let i = 0; i < xml.length; i += 10) {
         chunks.push(xml.slice(i, i + 10));
       }
-  
+
       xml = chunks;
     }
-  
+
     for (let chunk of xml) {
       parser.write(chunk);
     }
-  
+
     parser.end();
-  
-  })
+  });
 };
 describe('Saxophone', () => {
   it('should parse comments', async () => {
@@ -273,24 +273,22 @@ describe('Saxophone', () => {
     let finished2 = false;
 
     ['text', 'cdata', 'comment', 'processingInstruction', 'tagOpen', 'tagClose'].forEach(
-      eventName => {
-        parser1.on(eventName, (eventArgs: Events) => {
+      (eventName: EventType) => {
+        parser1.on(eventName, async eventArgs => {
           events1.push([eventName, eventArgs]);
         });
 
-        parser2.on(eventName, (eventArgs: Events) => {
+        parser2.on(eventName, async eventArgs => {
           events2.push([eventName, eventArgs]);
         });
       }
     );
 
     // parser1 receives the whole data once
-    parser1.parse(xml);
+    await parser1.parse(xml);
 
     // parser2 receives the data as several chunks through a piped stream
-    const stream = new Stream.Readable();
-
-    stream.pipe(parser2);
+    const stream = new Readable();
 
     for (let i = 0; i < xml.length; i += 9) {
       stream.push(xml.slice(i, i + 9));
@@ -298,7 +296,7 @@ describe('Saxophone', () => {
 
     stream.push(null);
 
-    parser1.on('finish', () => {
+    parser1.on('finish', async () => {
       finished1 = true;
 
       if (finished2) {
@@ -308,7 +306,7 @@ describe('Saxophone', () => {
       }
     });
 
-    parser2.on('finish', () => {
+    parser2.on('finish', async () => {
       finished2 = true;
 
       if (finished1) {
