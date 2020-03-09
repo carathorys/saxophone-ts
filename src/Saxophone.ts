@@ -181,7 +181,13 @@ export class Saxophone extends stream.Writable {
    */
   _write(chunk: any, encoding: string, callback: (error?: Error | null) => void): void {
     this.__write(chunk, encoding)
-      .then(() => callback())
+      .then(() => {
+        try {
+          callback();
+        } catch (err) {
+          console.error(err);
+        }
+      })
       .catch(err => callback(err));
   }
 
@@ -193,7 +199,13 @@ export class Saxophone extends stream.Writable {
    */
   _final(callback: (error?: Error | null) => void): void {
     this.__final()
-      .then(() => callback())
+      .then(() => {
+        try {
+          callback();
+        } catch (err) {
+          console.error(err);
+        }
+      })
       .catch(err => callback(err));
   }
 
