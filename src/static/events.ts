@@ -22,7 +22,8 @@ export type EventType =
   | 'processingInstruction'
   | 'tagOpen'
   | 'tagClose'
-  | 'finish';
+  | 'finish'
+  | 'error';
 
 export type EventTypeMap<E extends EventType> = E extends 'text'
   ? TextNode
