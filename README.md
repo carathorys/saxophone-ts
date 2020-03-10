@@ -2,6 +2,7 @@
 
 Fast and lightweight event-driven streaming XML parser in pure JavaScript.
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2c9c393af75e4a86bb30ac96982dcfd8)](https://app.codacy.com/manual/carathorys/saxophone?utm_source=github.com&utm_medium=referral&utm_content=carathorys/saxophone&utm_campaign=Badge_Grade_Dashboard)
 [![npm version](https://img.shields.io/npm/v/saxophone.svg?style=flat-square)](https://www.npmjs.com/package/saxophone)
 [![npm downloads](https://img.shields.io/npm/dm/saxophone.svg?style=flat-square)](https://www.npmjs.com/package/saxophone)
 [![build status](https://img.shields.io/travis/matteodelabre/saxophone.svg?style=flat-square)](https://travis-ci.org/matteodelabre/saxophone)
