@@ -1,10 +1,10 @@
 import { EventListeners, EventType, EventListenerFunctions, EventTypeMap } from './static/events';
 import { NodeType, TagOpenNode } from './static/nodes';
-import { StringDecoder, NodeStringDecoder } from 'string_decoder';
 
 export { EventListeners, EventType, EventListenerFunctions, NodeType };
 
 const rStream = require('readable-stream');
+const stringDecoder = require('string_decoder');
 /**
  * Parse a XML stream and emit events corresponding
  * to the different tokens encountered.
@@ -13,7 +13,7 @@ const rStream = require('readable-stream');
  *
  */
 export class Saxophone extends rStream.Writable {
-  _decoder: NodeStringDecoder;
+  _decoder: typeof stringDecoder.StringDecoder;
   _tagStack: any[];
   _waiting: { token: any; data: any } | null = null;
 
@@ -23,7 +23,7 @@ export class Saxophone extends rStream.Writable {
   constructor() {
     super({ decodeStrings: false });
     const state = this._writableState;
-    this._decoder = new StringDecoder(state.defaultEncoding) as any;
+    this._decoder = new stringDecoder.StringDecoder(state.defaultEncoding);
     // Stack of tags that were opened up until the current cursor position
     this._tagStack = [];
 
