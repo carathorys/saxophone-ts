@@ -16,6 +16,12 @@ jobs:
             - store_test_results:
                 path: test-results
             - coverage-reporter/send_report
+            - run:
+                name: Authernticate with registry
+                command: echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > .npmrc
+            - run:
+                name: Publish package
+                command: npm publish
 workflows:
   build-and-test:
     jobs:

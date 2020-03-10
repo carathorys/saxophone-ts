@@ -32,8 +32,8 @@ export class Saxophone extends rStream.Writable {
   }
 
   on<E extends EventType, N extends EventTypeMap<E>>(
-    event: E | string | symbol,
-    listener: EventListenerFunctions<E, N> | ((...args: any[]) => void)
+    event: E,
+    listener: EventListenerFunctions<E, N>
   ): this {
     return super.on(event, listener);
   }

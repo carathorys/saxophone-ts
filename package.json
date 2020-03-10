@@ -8,7 +8,7 @@
   "types": "dist/types/src/index.d.ts",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/carathorys/saxophone-ts"
   },
   "engines": {
     "node": ">=10.0.0"
@@ -38,18 +38,23 @@
     }
   ],
   "scripts": {
+    "benchmark": "node benchmark --unhandled-rejections=none",
+    "build": "tsc --module commonjs && rollup -c rollup.config.ts && typedoc --out docs --target es6 --theme minimal --mode file src",
+    "commit": "git-cz",
+    "deploy-docs": "ts-node tools/gh-pages-publish",
     "lint": "tslint  --project tsconfig.json -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
     "prebuild": "rimraf dist",
-    "build": "tsc --module commonjs && rollup -c rollup.config.ts && typedoc --out docs --target es6 --theme minimal --mode file src",
-    "start": "rollup -c rollup.config.ts -w",
-    "test": "jest --coverage",
-    "test:watch": "jest --watch",
-    "test:prod": "npm run lint && npm run test -- --no-cache",
-    "deploy-docs": "ts-node tools/gh-pages-publish",
-    "report-coverage": "cat ./coverage/lcov.info | coveralls",
-    "commit": "git-cz",
     "precommit": "lint-staged",
-    "travis-deploy-once": "travis-deploy-once"
+    "report-coverage": "cat ./coverage/lcov.info | coveralls",
+    "semantic-release-prepare": "ts-node ./tools/semantic-release-prepare.ts",
+    "semantic-release": "semantic-release",
+    "start": "rollup -c rollup.config.ts -w",
+    "test:prod": "npm run lint && npm run test -- --no-cache",
+    "test:watch": "jest --watch",
+    "test": "jest --coverage",
+    "travis-deploy-once": "travis-deploy-once",
+    "prepush": "npm run test:prod && npm run build",
+    "commitmsg": "commitlint -E HUSKY_GIT_PARAMS"
   },
   "lint-staged": {
     "{src,test}/**/*.ts": [
@@ -133,6 +138,7 @@
     "shelljs": "^0.8.3",
     "travis-deploy-once": "^5.0.11",
     "ts-jest": "^25.2.1",
+    "ts-node": "^8.6.2",
     "tslint": "^6.0.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-config-standard": "^9.0.0",

@@ -41,7 +41,7 @@ const expectEvents = async (xml: string | string[], events: any[]) => {
 
       for (const eventName of Object.keys(handlers)) {
         jest.spyOn(handlers, eventName);
-        parser.on(eventName, handlers[eventName]);
+        parser.on(eventName as EventType, handlers[eventName]);
       }
 
       if (!Array.isArray(xml)) {

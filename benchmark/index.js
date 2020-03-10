@@ -7,7 +7,8 @@ const path = require('path');
 const failsafe = require('./require-failsafe')();
 
 // benchmarked libraries
-const Saxophone = require('../lib');
+const SaxophoneTs = require('../dist/lib/src/index');
+const Saxophone = failsafe.require('saxophone');
 const EasySax = failsafe.require('easysax');
 const expat = failsafe.require('node-expat');
 const libxmljs = failsafe.require('libxmljs');
@@ -17,43 +18,52 @@ failsafe.commit();
 
 // test file:
 const xml = fs.readFileSync(path.join(__dirname, 'fixture.xml')).toString();
+new Benchmark.Suite()
+  .add('SaxophoneTs', () => {
+    const parser = new SaxophoneTs.Saxophone();
 
-(new Benchmark.Suite)
-    .add('Saxophone', () => {
-        const parser = new Saxophone();
+    // force Saxophone to parse attributes and entities
+    parser.on('tagopen', ({ attrs }) => Saxophone.parseAttrs(attrs));
+    parser.on('text', ({ contents }) => {
+      SaxophoneTs.parseEntities(contents);
+    });
 
-        // force Saxophone to parse attributes and entities
-        parser.on('tagopen', ({attrs}) => Saxophone.parseAttrs(attrs));
-        parser.on('text', ({contents}) => {
-            Saxophone.parseEntities(contents);
-        });
+    parser.parse(xml);
+  })
+  .add('Saxophone', () => {
+    const parser = new Saxophone();
 
-        parser.parse(xml);
-    })
-    .add('EasySax', () => {
-        const parser = new EasySax();
+    // force Saxophone to parse attributes and entities
+    parser.on('tagopen', ({ attrs }) => Saxophone.parseAttrs(attrs));
+    parser.on('text', ({ contents }) => {
+      Saxophone.parseEntities(contents);
+    });
 
-        // force EasySax to parse attributes and entities
-        parser.on('startNode', (elem, attr) => attr());
-        parser.on('textNode', (text, uq) => uq(text));
+    parser.parse(xml);
+  })
+  .add('EasySax', () => {
+    const parser = new EasySax();
 
-        parser.parse(xml);
-    })
-    .add('node-expat', () => {
-        const parser = new expat.Parser('UTF-8');
-        parser.write(xml);
-    })
-    .add('libxmljs.SaxParser', () => {
-        const parser = new libxmljs.SaxParser();
-        parser.parseString(xml);
-    })
-    .add('sax-js', () => {
-        const parser = sax.parser(false);
-        parser.write(xml).close();
-    })
+    // force EasySax to parse attributes and entities
+    parser.on('startNode', (elem, attr) => attr());
+    parser.on('textNode', (text, uq) => uq(text));
 
-    .on('cycle', ev => console.log(ev.target.toString()))
-    .on('complete', function () {
-        console.log('Fastest is ' + this.filter('fastest').map('name'));
-    })
-    .run({async: true});
+    parser.parse(xml);
+  })
+  .add('node-expat', () => {
+    const parser = new expat.Parser('UTF-8');
+    parser.write(xml);
+  })
+  .add('libxmljs.SaxParser', () => {
+    const parser = new libxmljs.SaxParser();
+    parser.parseString(xml);
+  })
+  .add('sax-js', () => {
+    const parser = sax.parser(false);
+    parser.write(xml).close();
+  })
+  .on('cycle', ev => console.log(ev.target.toString()))
+  .on('complete', function() {
+    console.log('Fastest is ' + this.filter('fastest').map('name'));
+  })
+  .run({ async: true });
