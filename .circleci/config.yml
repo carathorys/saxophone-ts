@@ -2,6 +2,7 @@ version: 2.1
 orbs:
   node: circleci/node@1.1.6
   codecov: codecov/codecov@1.0.5
+  coverage-reporter: codacy/coverage-reporter@7.5.0
 jobs:
   build-and-test:
     executor:
@@ -14,8 +15,7 @@ jobs:
             - run: npm test
             - store_test_results:
                 path: test-results
-            - codecov/upload:
-              file: coverage/*.json
+            - coverage-reporter/send_report
 workflows:
   build-and-test:
     jobs:
