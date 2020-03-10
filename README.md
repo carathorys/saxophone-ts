@@ -1,6 +1,7 @@
 # Saxophone-TS 🎷
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/2c9c393af75e4a86bb30ac96982dcfd8)](https://app.codacy.com/manual/carathorys/saxophone?utm_source=github.com&utm_medium=referral&utm_content=carathorys/saxophone&utm_campaign=Badge_Grade_Dashboard)
+[![codecov](https://codecov.io/gh/carathorys/saxophone/branch/master/graph/badge.svg)](https://codecov.io/gh/carathorys/saxophone)
 
 Fast and lightweight event-driven streaming XML parser in pure JavaScript.
 
