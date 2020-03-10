@@ -3,11 +3,6 @@
 Fast and lightweight event-driven streaming XML parser in pure JavaScript.
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/2c9c393af75e4a86bb30ac96982dcfd8)](https://app.codacy.com/manual/carathorys/saxophone?utm_source=github.com&utm_medium=referral&utm_content=carathorys/saxophone&utm_campaign=Badge_Grade_Dashboard)
-[![npm version](https://img.shields.io/npm/v/saxophone.svg?style=flat-square)](https://www.npmjs.com/package/saxophone)
-[![npm downloads](https://img.shields.io/npm/dm/saxophone.svg?style=flat-square)](https://www.npmjs.com/package/saxophone)
-[![build status](https://img.shields.io/travis/matteodelabre/saxophone.svg?style=flat-square)](https://travis-ci.org/matteodelabre/saxophone)
-[![coverage](https://img.shields.io/coveralls/matteodelabre/saxophone.svg?style=flat-square)](https://coveralls.io/github/matteodelabre/saxophone)
-[![dependencies status](http://img.shields.io/david/matteodelabre/saxophone.svg?style=flat-square)](https://david-dm.org/matteodelabre/saxophone)
 
 Saxophone is inspired by SAX parsers such as [sax-js](https://github.com/isaacs/sax-js) and [EasySax](https://github.com/vflash/easysax): unlike most XML parsers, it does not create a Document Object Model ([DOM](https://en.wikipedia.org/wiki/Document_Object_Model)) tree as a result of parsing documents.
 Instead, it emits events for each tag or text node encountered as the parsing goes on, which makes it an online algorithm.
@@ -23,7 +18,7 @@ This library works both in Node.JS ≥6.0 and recent browsers.
 To install with `npm`:
 
 ```sh
-$ npm install --save saxophone
+$ npm install --save saxophone-ts
 ```
 
 ## Benchmark
