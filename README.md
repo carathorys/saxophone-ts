@@ -18,7 +18,7 @@ This library works both in Node.JS ≥6.0 and recent browsers.
 To install with `npm`:
 
 ```sh
-$ npm install --save saxophone-ts
+npm install --save saxophone-ts
 ```
 
 ## Benchmark
@@ -34,11 +34,11 @@ libxmljs.SaxParser |  0.19.7 |                               869 ±0.98%
 sax-js             |   1.2.4 |                               634 ±2.01%
 
 ```sh
-$ git clone https://github.com/matteodelabre/saxophone.git
-$ cd saxophone
-$ npm install
-$ npm install --no-save easysax node-expat libxmljs sax
-$ npm run benchmark
+git clone https://github.com/matteodelabre/saxophone.git
+cd saxophone
+npm install
+npm install --no-save easysax node-expat libxmljs sax
+npm run benchmark
 ```
 
 ## Tests and coverage
@@ -46,11 +46,11 @@ $ npm run benchmark
 To run tests and check coverage, use the following commands:
 
 ```sh
-$ git clone https://github.com/matteodelabre/saxophone.git
-$ cd saxophone
-$ npm install
-$ npm test
-$ npm run coverage
+git clone https://github.com/matteodelabre/saxophone.git
+cd saxophone
+npm install
+npm test
+npm run coverage
 ```
 
 ## Examples
@@ -129,7 +129,7 @@ Parsing finished.
 
 Creates a new Saxophone parser instance. This object is a writable stream that will emit an event for each tag or node parsed from the incoming data. See [the list of events below.](#events)
 
-### `Saxophone#on()`, `Saxophone#removeListener()`, ...
+### `Saxophone#on()`, `Saxophone#removeListener()`,
 
 Manage event listeners just like with any other event emitter. Saxophone inherits from all `EventEmitter` methods. See the relevant [Node documentation.](https://nodejs.org/api/events.html)
 
