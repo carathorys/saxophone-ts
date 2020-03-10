@@ -45,12 +45,15 @@ export class Saxophone extends rStream.Writable {
    * @param {string} encoding Encoding of the string, or 'buffer'.
    * @param {function} callback
    */
-  _write(chunk: any, encoding: string, callback: (error?: Error | null) => void): void {
-    this.__write(chunk, encoding)
+  _write(chunk: any, _: string, callback: (error?: Error | null) => void): void {
+    this.__write(chunk)
       .then(() => {
         callback();
       })
-      .catch(err => callback(err));
+      .catch(err => {
+        callback(err);
+        this.emit('finish');
+      });
   }
 
   /**
@@ -64,7 +67,9 @@ export class Saxophone extends rStream.Writable {
       .then(() => {
         callback();
       })
-      .catch(err => callback(err));
+      .catch(err => {
+        callback(err);
+      });
   }
 
   /**
@@ -210,7 +215,7 @@ export class Saxophone extends rStream.Writable {
           }
 
           if (input[commentClose + 2] !== '>') {
-            throw Error('Unexpected -- inside comment');
+            throw new Error('Unexpected -- inside comment');
           }
 
           this.emit('comment', { contents: input.slice(chunkPos, commentClose) });
@@ -220,7 +225,7 @@ export class Saxophone extends rStream.Writable {
         }
 
         // TODO: recognize DOCTYPEs here
-        throw Error('Unrecognized sequence: <!' + nextNextChar);
+        throw new Error('Unrecognized sequence: <!' + nextNextChar);
       }
 
       if (nextChar === '?') {
@@ -255,7 +260,7 @@ export class Saxophone extends rStream.Writable {
 
         if (stackedTagName !== tagName) {
           this._tagStack.length = 0;
-          throw Error(`Unclosed tag: ${stackedTagName}`);
+          throw new Error(`Unclosed tag: ${stackedTagName}`);
         }
 
         this.emit('tagClose', { name: tagName });
@@ -279,7 +284,7 @@ export class Saxophone extends rStream.Writable {
           isSelfClosing
         });
       } else if (whitespace === 0) {
-        throw Error('Tag names may not start with whitespace');
+        throw new Error('Tag names may not start with whitespace');
       } else {
         // Tag with attributes
         this._handleTagOpening({
@@ -297,9 +302,8 @@ export class Saxophone extends rStream.Writable {
    * Handle a chunk of data written into the stream.
    *
    * @param {Buffer|string} chunk Chunk of data.
-   * @param {string} encoding Encoding of the string, or 'buffer'.
    */
-  private async __write(chunk: string | Buffer, encoding: string): Promise<void> {
+  private async __write(chunk: string | Buffer): Promise<void> {
     const data = chunk instanceof Buffer ? this._decoder.write(chunk) : chunk;
     return this._parseChunk(data);
   }

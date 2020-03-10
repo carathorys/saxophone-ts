@@ -1,8 +1,7 @@
-import { stripIndent } from 'common-tags';
 import { uniq } from 'lodash';
 import { EventType, Saxophone } from './Saxophone';
-
-const { Readable } = require('readable-stream');
+import { Readable } from 'readable-stream';
+import { stripIndent } from 'common-tags';
 
 /**
  * Verify that an XML text is parsed as the specified stream of events.
@@ -11,55 +10,76 @@ const { Readable } = require('readable-stream');
  * @param events Sequence of events that must be emitted in order.
  */
 const expectEvents = async (xml: string | string[], events: any[]) => {
-  return new Promise(async (resolve, reject) => {
-    let eventsIndex = 0;
-    const parser = new Saxophone();
+  return new Promise((r, c) => {
+    const handlers: any = {};
 
-    uniq(events.map(([name]) => name)).forEach((eventName: EventType) => {
-      parser.on(eventName, async (eventArgs: any) => {
-        const [expEventName, expEventArgs] = events[eventsIndex];
-        eventsIndex++;
+    new Promise((resolve, reject) => {
+      let eventsIndex = 0;
+      const parser = new Saxophone();
 
-        expect(eventName).toBe(expEventName);
+      uniq(events.map(([name]) => name)).forEach((eventName: EventType) => {
+        handlers[eventName] = (eventArgs: any) => {
+          const [expEventName, expEventArgs] = events[eventsIndex];
+          eventsIndex++;
 
-        if (typeof expEventArgs === 'object' && expEventArgs !== null) {
-          if (expEventArgs.constructor.name === 'Error') {
-            expect(eventArgs.message).toBe(expEventArgs.message);
-            resolve();
-          } else {
-            expect(eventArgs).toStrictEqual(expEventArgs);
+          expect(eventName).toBe(expEventName);
+
+          if (typeof expEventArgs === 'object' && expEventArgs !== null) {
+            if (expEventArgs.constructor.name === 'Error') {
+              expect(eventArgs.message).toBe(expEventArgs.message);
+            } else {
+              expect(eventArgs).toStrictEqual(expEventArgs);
+            }
           }
-        }
+        };
       });
-    });
 
-    parser.on('finish', async () => {
-      expect(eventsIndex).toBe(events.length);
-      resolve();
-    });
+      handlers['finish'] = () => {
+        expect(eventsIndex).toBe(events.length);
+        resolve();
+      };
 
-    if (!Array.isArray(xml)) {
-      // By default, split data in chunks of size 10
-      const chunks = [];
-
-      for (let i = 0; i < xml.length; i += 10) {
-        chunks.push(xml.slice(i, i + 10));
+      for (const eventName of Object.keys(handlers)) {
+        jest.spyOn(handlers, eventName);
+        parser.on(eventName, handlers[eventName]);
       }
 
-      xml = chunks;
-    }
+      if (!Array.isArray(xml)) {
+        // By default, split data in chunks of size 10
+        const chunks = [];
 
-    for (let chunk of xml) {
-      parser.write(chunk);
-    }
+        for (let i = 0; i < xml.length; i += 10) {
+          chunks.push(xml.slice(i, i + 10));
+        }
 
-    parser.end();
+        xml = chunks;
+      }
+
+      for (let chunk of xml) {
+        parser.write(chunk);
+      }
+
+      parser.end();
+    })
+      .then(() => {
+        Object.keys(handlers).forEach(key => {
+          expect(handlers[key]).toHaveBeenCalled();
+        });
+        r();
+      })
+      .catch(err => {
+        c(err);
+      });
   });
 };
+
 describe('Saxophone', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
   it('should parse comments', async () => {
-    await expectEvents('<!-- this is a comment -->', [
-      ['comment', { contents: ' this is a comment ' }]
+    await expectEvents('<!-- this is a valid comment -->', [
+      ['comment', { contents: ' this is a valid comment ' }]
     ]);
   });
 
@@ -71,7 +91,7 @@ describe('Saxophone', () => {
   });
 
   it('should not parse unclosed comments', async () => {
-    await expectEvents('<!-- this is a comment ->', [['error', Error('Unclosed comment')]]);
+    await expectEvents('<!-- this is an invalid comment ->', [['error', Error('Unclosed comment')]]);
   });
 
   it('should not parse invalid comments', async () => {
@@ -298,7 +318,6 @@ describe('Saxophone', () => {
 
     parser1.on('finish', async () => {
       finished1 = true;
-
       if (finished2) {
         expect(events1).toStrictEqual(events2);
         // assert.deepEqual(events1, events2);
