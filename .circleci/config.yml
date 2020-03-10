@@ -1,7 +1,6 @@
 version: 2.1
 orbs:
   node: circleci/node@1.1.6
-  codecov: codecov/codecov@1.0.5
   coverage-reporter: codacy/coverage-reporter@7.5.0
 jobs:
   build-and-test:
@@ -13,15 +12,13 @@ jobs:
           steps:
             - run: npm install
             - run: npm test
-            - store_test_results:
-                path: test-results
+            # - store_test_results:
+            #     path: test-results
             - coverage-reporter/send_report
-            - run:
-                name: Authernticate with registry
-                command: echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > .npmrc
+            - run: npm run build
             - run:
                 name: Publish package
-                command: npm publish
+                command: npm run semantic-release || true
 workflows:
   build-and-test:
     jobs:
