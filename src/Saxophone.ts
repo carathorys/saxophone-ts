@@ -1,11 +1,10 @@
 import { EventListeners, EventType, EventListenerFunctions, EventTypeMap } from './static/events';
 import { NodeType, TagOpenNode } from './static/nodes';
+import { StringDecoder, NodeStringDecoder } from 'string_decoder';
 
 export { EventListeners, EventType, EventListenerFunctions, NodeType };
 
 const rStream = require('readable-stream');
-const { Readable } = rStream;
-export { Readable };
 /**
  * Parse a XML stream and emit events corresponding
  * to the different tokens encountered.
@@ -14,6 +13,7 @@ export { Readable };
  *
  */
 export class Saxophone extends rStream.Writable {
+  _decoder: NodeStringDecoder;
   _tagStack: any[];
   _waiting: { token: any; data: any } | null = null;
 
@@ -21,7 +21,9 @@ export class Saxophone extends rStream.Writable {
    * Create a new parser instance.
    */
   constructor() {
-    super({ defaultEncoding: 'utf8' });
+    super({ decodeStrings: false });
+    const state = this._writableState;
+    this._decoder = new StringDecoder(state.defaultEncoding) as any;
     // Stack of tags that were opened up until the current cursor position
     this._tagStack = [];
 
@@ -30,8 +32,8 @@ export class Saxophone extends rStream.Writable {
   }
 
   on<E extends EventType, N extends EventTypeMap<E>>(
-    event: E,
-    listener: EventListenerFunctions<E, N>
+    event: E | string | symbol,
+    listener: EventListenerFunctions<E, N> | ((...args: any[]) => void)
   ): this {
     return super.on(event, listener);
   }
@@ -46,11 +48,7 @@ export class Saxophone extends rStream.Writable {
   _write(chunk: any, encoding: string, callback: (error?: Error | null) => void): void {
     this.__write(chunk, encoding)
       .then(() => {
-        try {
-          callback();
-        } catch (err) {
-          console.error(err);
-        }
+        callback();
       })
       .catch(err => callback(err));
   }
@@ -64,11 +62,7 @@ export class Saxophone extends rStream.Writable {
   _final(callback: (error?: Error | null) => void): void {
     this.__final()
       .then(() => {
-        try {
-          callback();
-        } catch (err) {
-          console.error(err);
-        }
+        callback();
       })
       .catch(err => callback(err));
   }
@@ -79,7 +73,7 @@ export class Saxophone extends rStream.Writable {
    * @param {Buffer|string} input Input chunk.
    * @return {Saxophone} This instance.
    */
-  async parse(input: any | string): Promise<void> {
+  parse(input: typeof rStream.Readable | string) {
     if (input instanceof rStream.Readable) {
       input.pipe(this);
     } else {
@@ -305,8 +299,9 @@ export class Saxophone extends rStream.Writable {
    * @param {Buffer|string} chunk Chunk of data.
    * @param {string} encoding Encoding of the string, or 'buffer'.
    */
-  private async __write(chunk: string, encoding: string): Promise<void> {
-    return this._parseChunk(chunk);
+  private async __write(chunk: string | Buffer, encoding: string): Promise<void> {
+    const data = chunk instanceof Buffer ? this._decoder.write(chunk) : chunk;
+    return this._parseChunk(data);
   }
 
   /**
@@ -314,7 +309,7 @@ export class Saxophone extends rStream.Writable {
    */
   private async __final(): Promise<void> {
     // Make sure all data has been extracted from the decoder
-    // this._parseChunk(this._decoder.end());
+    this._parseChunk(this._decoder.end());
 
     // Handle unclosed nodes
     switch (this._waiting?.token) {

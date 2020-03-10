@@ -285,7 +285,7 @@ describe('Saxophone', () => {
     );
 
     // parser1 receives the whole data once
-    await parser1.parse(xml);
+    parser1.parse(xml);
 
     // parser2 receives the data as several chunks through a piped stream
     const stream = new Readable();
