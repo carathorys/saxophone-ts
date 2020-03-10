@@ -91,7 +91,9 @@ describe('Saxophone', () => {
   });
 
   it('should not parse unclosed comments', async () => {
-    await expectEvents('<!-- this is an invalid comment ->', [['error', Error('Unclosed comment')]]);
+    await expectEvents('<!-- this is an invalid comment ->', [
+      ['error', Error('Unclosed comment')]
+    ]);
   });
 
   it('should not parse invalid comments', async () => {
