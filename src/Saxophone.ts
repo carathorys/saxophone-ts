@@ -5,6 +5,8 @@ export { EventListeners, EventType, EventListenerFunctions, NodeType };
 
 const rStream = require('readable-stream');
 const stringDecoder = require('string_decoder');
+const Buffer = require('buffer');
+
 /**
  * Parse a XML stream and emit events corresponding
  * to the different tokens encountered.
@@ -45,45 +47,71 @@ export class Saxophone extends rStream.Writable {
    * @param {string} encoding Encoding of the string, or 'buffer'.
    * @param {function} callback
    */
-  _write(chunk: any, _: string, callback: (error?: Error | null) => void): void {
-    this.__write(chunk)
-      .then(() => {
-        callback();
-      })
-      .catch(err => {
-        callback(err);
-        this.emit('finish');
-      });
+  _write(chunk: any, encoding: string, callback: (error?: Error | null) => void): void {
+    const data = encoding === 'buffer' ? this._decoder.write(chunk) : chunk;
+    let error: any;
+    try {
+      this._parseChunk(data);
+    } catch (err) {
+      error = err
+    } finally {
+      callback(error);
+    }
   }
 
   /**
    * Handle the end of incoming data.
    *
-   * @private
    * @param {function} callback
    */
-  _final(callback: (error?: Error | null) => void): void {
-    this.__final()
-      .then(() => {
-        callback();
-      })
-      .catch(err => {
-        callback(err);
-      });
+  _final(callback: (error?: Error) => void): void {
+    try {
+      // Make sure all data has been extracted from the decoder
+      this._parseChunk(this._decoder.end());
+    } catch (err) {
+      callback(err);
+      return;
+    }
+
+    // Handle unclosed nodes
+    switch (this._waiting?.token) {
+      case 'text':
+        // Text nodes are implicitly closed
+        this.emit('text', { contents: this._waiting.data });
+        break;
+      case 'cdata':
+        callback(new Error('Unclosed CDATA section'));
+        return;
+      case 'comment':
+        callback(new Error('Unclosed comment'));
+        return;
+      case 'processingInstruction':
+        callback(new Error('Unclosed processing instruction'));
+        return;
+      case 'tagOpen':
+      case 'tagClose':
+        // We do not distinguish between unclosed opening
+        // or unclosed closing tags
+        callback(new Error('Unclosed tag'));
+        return;
+      default:
+      // Pass
+    }
+
+    if (this._tagStack.length !== 0) {
+      callback(new Error(`Unclosed tags: ${this._tagStack.join(',')}`));
+    }
+    callback();
   }
 
   /**
    * Immediately parse a complete chunk of XML and close the stream.
    *
-   * @param {Buffer|string} input Input chunk.
-   * @return {Saxophone} This instance.
+   * @param input Input chunk.
    */
-  parse(input: typeof rStream.Readable | string) {
-    if (input instanceof rStream.Readable) {
-      input.pipe(this);
-    } else {
-      this.write(input);
-    }
+  public parse(input: Buffer | string): Saxophone {
+    this.end(input);
+    return this;
   }
 
   /**
@@ -295,49 +323,6 @@ export class Saxophone extends rStream.Writable {
       }
 
       chunkPos = tagClose + 1;
-    }
-  }
-
-  /**
-   * Handle a chunk of data written into the stream.
-   *
-   * @param {Buffer|string} chunk Chunk of data.
-   */
-  private async __write(chunk: string | Buffer): Promise<void> {
-    const data = chunk instanceof Buffer ? this._decoder.write(chunk) : chunk;
-    return this._parseChunk(data);
-  }
-
-  /**
-   * Handle the end of incoming data.
-   */
-  private async __final(): Promise<void> {
-    // Make sure all data has been extracted from the decoder
-    this._parseChunk(this._decoder.end());
-
-    // Handle unclosed nodes
-    switch (this._waiting?.token) {
-      case 'text':
-        // Text nodes are implicitly closed
-        this.emit('text', { contents: this._waiting.data });
-        break;
-      case 'cdata':
-        throw new Error('Unclosed CDATA section');
-      case 'comment':
-        throw new Error('Unclosed comment');
-      case 'processingInstruction':
-        throw new Error('Unclosed processing instruction');
-      case 'tagOpen':
-      case 'tagClose':
-        // We do not distinguish between unclosed opening
-        // or unclosed closing tags
-        throw new Error('Unclosed tag');
-      default:
-      // Pass
-    }
-
-    if (this._tagStack.length !== 0) {
-      throw new Error(`Unclosed tags: ${this._tagStack.join(',')}`);
     }
   }
 }
