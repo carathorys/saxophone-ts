@@ -15,9 +15,9 @@ const Buffer = require('buffer');
  *
  */
 export class Saxophone extends rStream.Writable {
-  _decoder: typeof stringDecoder.StringDecoder;
-  _tagStack: any[];
-  _waiting: { token: any; data: any } | null = null;
+  private _decoder: typeof stringDecoder.StringDecoder;
+  private _tagStack: any[];
+  private _waiting: { token: any; data: any } | null = null;
 
   /**
    * Create a new parser instance.
@@ -47,7 +47,7 @@ export class Saxophone extends rStream.Writable {
    * @param {string} encoding Encoding of the string, or 'buffer'.
    * @param {function} callback
    */
-  _write(chunk: any, encoding: string, callback: (error?: Error | null) => void): void {
+  private _write(chunk: any, encoding: string, callback: (error?: Error | null) => void): void {
     const data = encoding === 'buffer' ? this._decoder.write(chunk) : chunk;
     let error: any;
     try {
@@ -64,7 +64,7 @@ export class Saxophone extends rStream.Writable {
    *
    * @param {function} callback
    */
-  _final(callback: (error?: Error) => void): void {
+  private _final(callback: (error?: Error) => void): void {
     try {
       // Make sure all data has been extracted from the decoder
       this._parseChunk(this._decoder.end());
@@ -109,8 +109,9 @@ export class Saxophone extends rStream.Writable {
    *
    * @param input Input chunk.
    */
-  public parse(input: Buffer | string): Saxophone {
-    this.end(input);
+  public parse(input: typeof rStream.Readable | Buffer | string): Saxophone {
+    this.write(input);
+    this.end();
     return this;
   }
 
